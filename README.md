@@ -1,3 +1,5 @@
-# Flighty Mango
+# Personal Kanban
 
-Preact + Vite + Eslint + Prettier + TailwindCSS
+Personal Minimal Kanban Board with local data store
+
+Built with Preact + TS

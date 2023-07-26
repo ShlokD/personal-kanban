@@ -1,33 +1,30 @@
-import { useState } from "preact/hooks";
-import preactLogo from "./assets/preact.svg";
-import viteLogo from "/vite.svg";
-import "./app.css";
-
+import DBContextProvider from "./db-context";
+import Board from "./board";
+import AppContextProvider from "./app-context";
+import ProjectMenu from "./project-menu";
 export function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src={viteLogo} class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://preactjs.com" target="_blank" rel="noreferrer">
-          <img src={preactLogo} class="logo preact" alt="Preact logo" />
-        </a>
-      </div>
-      <h1>Vite + Preact</h1>
-      <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/app.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p class="read-the-docs">
-        Click on the Vite and Preact logos to learn more
-      </p>
-    </>
+    <div className="flex flex-col items-center">
+      <DBContextProvider>
+        <AppContextProvider>
+          <header className="w-full p-8 text-2xl bg-gray-900 flex flex-row gap-4 w-11/12 items-center font-bold">
+            <div className="p-2 rounded-lg bg-white">
+              <img src="/logo.png" height="48" width="48" alt="" />
+            </div>
+            <h1>Personal Kanban</h1>
+          </header>
+          <main className="flex flex-col w-11/12 mx-2 my-4 ">
+            <div className="flex gap-4">
+              <div className="w-1/4">
+                <ProjectMenu />
+              </div>
+              <div className="w-3/4">
+                <Board />
+              </div>
+            </div>
+          </main>
+        </AppContextProvider>
+      </DBContextProvider>
+    </div>
   );
 }
