@@ -3,6 +3,8 @@ import { useDBContext } from "./db-context";
 import { useAppContext } from "./app-context";
 import { ulid } from "ulid";
 import { Status, Task } from "./types";
+
+type TaskCardProps = Task & { handleDelete: (taskId: string) => void };
 const transformTasks = (tasks: Task[]): Record<Status, Task[]> =>
   tasks.reduce((taskMap, task) => {
     const status = task.status;
@@ -14,22 +16,32 @@ const transformTasks = (tasks: Task[]): Record<Status, Task[]> =>
     return taskMap;
   }, {} as Record<Status, Task[]>);
 
-const TaskCard = (props: Task) => {
-  const { task_id, title, description, date, status } = props;
+const TaskCard = (props: TaskCardProps) => {
+  const { task_id, title, description, date, status, handleDelete } = props;
   const days = Math.round((Date.now() - date) / 86400000);
   return (
     <div
       className={`${
-        status === "DONE" ? "line-through bg-gray-500" : ""
-      } border-2 border-black p-4 bg-gray-100 rounded-xl text-gray-800 w-1/2`}
+        status === "DONE" ? "line-through bg-gray-900" : ""
+      } border-2 border-black p-4 bg-gray-800 rounded-xl text-gray-100 w-2/3`}
       draggable
       onDragStart={(ev: DragEvent) => {
         ev.dataTransfer?.setData("task_id", task_id);
       }}
     >
-      <p className="font-bold text-xl">{title}</p>
-      <p className="text-sm py-2 text-gray-500">{description}</p>
-      <p>{days} days ago</p>
+      <p className="font-bold text-xl truncate">{title}</p>
+      <p className="text-sm py-2 text-gray-400 truncate w-full">
+        {description}
+      </p>
+      <div className="flex flex-row py-2 text-sm items-center gap-2">
+        <p className="text-gray-400">{days} days ago</p>
+        <button
+          onClick={() => handleDelete(task_id)}
+          className="bg-purple-900 p-2 rounded-lg"
+        >
+          &#9587;
+        </button>
+      </div>
     </div>
   );
 };
@@ -66,6 +78,16 @@ const Board = () => {
       .equalsIgnoreCase(currentProject.project_id)
       .toArray();
     setTasks(dbTasks);
+  };
+
+  const handleDelete = async (taskId: string) => {
+    if (!taskId || !db) {
+      return;
+    }
+
+    await db.table("tasks").delete(taskId);
+    const newTasks = tasks.filter((t) => t.task_id !== taskId);
+    setTasks(newTasks);
   };
 
   const handleAddTask = async () => {
@@ -115,35 +137,50 @@ const Board = () => {
       </button>
       <div className="flex flex-row gap-2" style={{ height: "90vh" }}>
         <div
-          className="w-1/3 flex flex-col gap-2 bg-gray-800 p-2 h-full items-center"
+          className="w-1/3 flex flex-col gap-2 bg-gray-800 p-2 items-center overflow-y-auto"
+          style={{ height: "95%" }}
           onDrop={(ev) => handleDrop(ev, "TODO")}
           onDragOver={(ev) => ev.preventDefault()}
         >
           <h2 className="text-center text-2xl font-bold p-2">Backlog</h2>
           {displayTasks.TODO?.map((task, i) => (
-            <TaskCard key={`b-{0}-${i}`} {...task} />
+            <TaskCard
+              key={`b-{0}-${i}`}
+              {...task}
+              handleDelete={handleDelete}
+            />
           ))}
         </div>
         <div
-          className="w-1/3 flex flex-col gap-2 bg-gray-800 p-2 pointer-events-auto h-full items-center"
+          className="w-1/3 flex flex-col gap-2 bg-gray-800 p-2 pointer-events-auto overflow-y-autp items-center"
+          style={{ height: "95%" }}
           onDrop={(ev) => handleDrop(ev, "DOING")}
           onDragOver={(ev) => ev.preventDefault()}
         >
           <h2 className="text-center text-2xl font-bold p-2">In Progress</h2>
 
           {displayTasks.DOING?.map((task, i) => (
-            <TaskCard key={`b-{1}-${i}`} {...task} />
+            <TaskCard
+              key={`b-{1}-${i}`}
+              {...task}
+              handleDelete={handleDelete}
+            />
           ))}
         </div>
         <div
-          className="w-1/3 flex flex-col gap-2 bg-gray-800 p-2 h-full items-center"
+          className="w-1/3 flex flex-col gap-2 bg-gray-800 p-2 items-center overflow-y-auto"
+          style={{ height: "95%" }}
           onDrop={(ev) => handleDrop(ev, "DONE")}
           onDragOver={(ev) => ev.preventDefault()}
         >
           <h2 className="text-center text-2xl font-bold p-2">Done</h2>
 
           {displayTasks.DONE?.map((task, i) => (
-            <TaskCard key={`b-{2}-${i}`} {...task} />
+            <TaskCard
+              key={`b-{2}-${i}`}
+              {...task}
+              handleDelete={handleDelete}
+            />
           ))}
         </div>
       </div>
@@ -160,6 +197,7 @@ const Board = () => {
       >
         <input
           value={taskTitle}
+          maxLength={64}
           onChange={(ev) =>
             setTaskTitle((ev?.target as HTMLInputElement)?.value)
           }

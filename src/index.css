@@ -18,3 +18,7 @@ body {
   background-color: black;
   color: #fefefe;
 }
+
+::-webkit-scrollbar {
+  display: none;
+}
